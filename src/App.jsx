@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import SignupPage from './pages/SignupPage';
@@ -8,6 +8,9 @@ import ProfilePage from './pages/ProfilePage';
 import { useAuthStore } from './store/useAuthStore';
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
+
+// Lazy load test components
+const TestSignup = lazy(() => import('./pages/TestSignup'));
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -47,6 +50,16 @@ const App = () => {
         <Route 
           path='/profile' 
           element={authUser ? <ProfilePage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path='/test' 
+          element={
+            <Suspense fallback={<div className="flex justify-center items-center h-screen">
+              <Loader className='animate-spin w-8 h-8 text-purple-400' />
+            </div>}>
+              <TestSignup />
+            </Suspense>
+          } 
         />
       </Routes>
 
