@@ -23,16 +23,31 @@ export const useAuthStore = create((set) => ({
     signUp: async (data) => {
         set({ isSigningUp: true })
         try {
-            const res = await axiosInstance.post("auth/signup", data)
-            set({ authUser: res.data })
-            toast.success("Account Created Successfully")
+            console.log("Sending signup request with data:", data);
+            const res = await axiosInstance.post("auth/signup", data);
+            console.log("Signup response:", res.data);
+            set({ authUser: res.data });
+            toast.success("Account Created Successfully");
         } catch (error) {
-            const message = error?.response?.data?.message || "Signup failed. Please check your input.";
-            toast.error(message);
+            console.error("Signup error details:", error);
+            
+            // Get more detailed error information
+            const errorMessage = error?.response?.data?.message || 
+                                 error?.message || 
+                                 "Signup failed. Please check your network connection.";
+            
+            // Show specific error messages for common issues
+            if (error?.response?.status === 409) {
+                toast.error("This email is already registered. Please login or use a different email.");
+            } else if (error?.response?.status === 500) {
+                toast.error("Server error. Please try again later or contact support.");
+            } else {
+                toast.error(errorMessage);
+            }
         } finally {
             set({
                 isSigningUp: false
-            })
+            });
         }
     },
     login: async (data) => {
