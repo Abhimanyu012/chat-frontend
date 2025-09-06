@@ -3,14 +3,19 @@ import axios from "axios";
 // Determine the API base URL with fallbacks
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
+// Remove trailing /api if it exists to avoid double /api in the URL
+const normalizedBaseURL = API_BASE_URL.endsWith('/api') 
+    ? API_BASE_URL 
+    : API_BASE_URL + '/api';
+
 // Log the base URL for debugging
-console.log("API Base URL:", API_BASE_URL);
+console.log("API Base URL:", normalizedBaseURL);
 
 // Create axios instance with proper configuration
 export const axiosInstance = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: normalizedBaseURL,
     withCredentials: true, // Needed for cookies/auth
-    timeout: 10000, // 10 second timeout
+    timeout: 30000, // 30 second timeout (increased from 10s)
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
