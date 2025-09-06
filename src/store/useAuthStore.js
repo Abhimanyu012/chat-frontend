@@ -11,13 +11,22 @@ export const useAuthStore = create((set) => ({
     isCheckingAuth: true,
     checkAuth: async () => {
         try {
-            const res = await axiosInstance.get("/auth/check")
-            set({ authUser: res.data })
+            console.log("Checking auth status...");
+            const res = await axiosInstance.get("/auth/check");
+            console.log("Auth check response:", res.data);
+            set({ authUser: res.data });
         } catch (error) {
-            console.log("Error in checkauth: ", error)
-            set({ authUser: null })
+            console.log("Error in checkauth: ", error);
+            
+            // Check for CORS errors
+            if (error.message === "Network Error") {
+                console.warn("Possible CORS issue. Check that backend CORS settings include this frontend domain.");
+            }
+            
+            // If not authenticated, clear user data
+            set({ authUser: null });
         } finally {
-            set({ isCheckingAuth: false })
+            set({ isCheckingAuth: false });
         }
     },
     signUp: async (data) => {
