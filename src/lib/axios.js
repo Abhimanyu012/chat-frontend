@@ -15,7 +15,7 @@ console.log("API Base URL:", normalizedBaseURL);
 export const axiosInstance = axios.create({
     baseURL: normalizedBaseURL,
     withCredentials: true, // Needed for cookies/auth
-    timeout: 30000, // 30 second timeout (increased from 10s)
+    timeout: 60000, // 60 second timeout for image uploads
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
