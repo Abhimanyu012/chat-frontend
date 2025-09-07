@@ -4,6 +4,41 @@ import { Camera, X, User, Mail, Calendar, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import toast from 'react-hot-toast';
 
+// Utility function to compress image
+const compressImage = (file, quality = 0.8, maxWidth = 800, maxHeight = 800) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions while maintaining aspect ratio
+      let { width, height } = img;
+      
+      if (width > height) {
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 const ProfilePage = () => {
   const { authUser, updateProfile, isUpdatingProfile } = useAuthStore();
   const [showImageModal, setShowImageModal] = useState(false);
@@ -12,21 +47,50 @@ const ProfilePage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+    console.log("📸 Original file:", {
+      name: file.name,
+      size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      type: file.type
+    });
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size should be less than 10MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const base64Image = reader.result;
-      try {
-        await updateProfile({ profilePic: base64Image });
-          } catch (error) {
-        toast.error('Failed to update profile picture');
-      }
-    };
+    try {
+      toast.loading('Compressing image...', { id: 'compress' });
+      
+      // Compress the image before uploading
+      const compressedFile = await compressImage(file, 0.8, 400, 400);
+      
+      console.log("🗜️  Compressed file:", {
+        originalSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        compressedSize: `${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
+        compressionRatio: `${((1 - compressedFile.size / file.size) * 100).toFixed(1)}%`
+      });
+      
+      toast.dismiss('compress');
+      
+      const reader = new FileReader();
+      reader.readAsDataURL(compressedFile);
+      reader.onload = async () => {
+        const base64Image = reader.result;
+        console.log("📤 Uploading compressed image:", {
+          base64Size: `${(base64Image.length / 1024).toFixed(2)}KB`
+        });
+        
+        try {
+          await updateProfile({ profilePic: base64Image });
+        } catch (error) {
+          toast.error('Failed to update profile picture');
+        }
+      };
+    } catch (error) {
+      toast.dismiss('compress');
+      console.error("Image compression error:", error);
+      toast.error('Failed to process image');
+    }
   };
 
   return (

@@ -132,7 +132,17 @@ export const useAuthStore = create((set) => ({
             console.error("Profile update error:", error);
             
             if (error.code === 'ECONNABORTED') {
-                toast.error("Connection timeout while updating profile. Please try again with a smaller image.");
+                toast.error("Upload timeout. Please try again or use a smaller image.");
+                return;
+            }
+            
+            if (error?.response?.status === 408) {
+                toast.error("Request timeout. Please try again with a smaller image.");
+                return;
+            }
+            
+            if (error?.response?.status === 413) {
+                toast.error("Image too large. Please use a smaller image.");
                 return;
             }
             
